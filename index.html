@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1c2125">
+<title>Fotos de Sensores en Obra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script src="config.js"></script>
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-size:14px}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+/* Herramienta de campo: el croquis es la pantalla principal; amarillo de seguridad = falta foto, verde = listo */
+:root{
+  --bg:#f1f0ec; --panel:#ffffff; --ink:#1c2125; --muted:#5b636a; --line:#d9d7d0;
+  --paper:#ffffff; --pend:#f5b700; --pend-ink:#1c1600; --ok:#1f8f4e; --ok-ink:#ffffff; --ok-bg:#e1f1e7; --pend-bg:#fdf3cf;
+  --accent:#1c2125; --accent-ink:#ffffff; --danger:#b42318;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-tag:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141618; --panel:#1e2225; --ink:#ebeae6; --muted:#a1a7ac; --line:#2f353a;
+  --ok-bg:#16301f; --pend-bg:#3a3010; --accent:#ebeae6; --accent-ink:#141618; --danger:#ff8a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141618; --panel:#1e2225; --ink:#ebeae6; --muted:#a1a7ac; --line:#2f353a;
+  --ok-bg:#16301f; --pend-bg:#3a3010; --accent:#ebeae6; --accent-ink:#141618; --danger:#ff8a80; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.4}
+.wrap{max-width:1100px;margin:0 auto;padding-block:12px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--f-display);font-weight:700;font-size:1.7rem;line-height:1.05;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:1.3rem;margin:0}
+.eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:end;justify-content:space-between}
+.head .t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.prog{display:flex;flex-direction:column;gap:5px;flex:1 1 220px;max-width:360px}
+.bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+.count{font-variant-numeric:tabular-nums;font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:50%;display:inline-block;border:2px solid #1c2125}
+.notice{background:var(--pend-bg);border-radius:10px;padding:10px 14px;font-size:.95rem}
+
+/* Visor del croquis */
+.vp{position:relative;height:min(68vh,720px);min-height:320px;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.vp.drag{cursor:grabbing}
+.vp.full{position:fixed;inset:0;height:auto;min-height:0;border-radius:0;border:0;z-index:15}
+.vp>img{position:absolute;left:0;top:0;width:4800px;height:3914px;max-width:none;transform-origin:0 0;will-change:transform;pointer-events:none;-webkit-user-drag:none}
+.pins{position:absolute;inset:0;pointer-events:none}
+.pin{position:absolute;left:0;top:0;width:0;height:0}
+.pin b{position:absolute;left:calc(var(--sz)/-2);top:calc(var(--sz)/-2);width:var(--sz);height:var(--sz);border-radius:50%;background:var(--pend);border:2px solid #1c2125;box-shadow:0 0 0 2px #fff;display:flex;align-items:center;justify-content:center;color:var(--pend-ink);font:700 calc(var(--sz)*.42)/1 var(--f-body)}
+.pin.done b{background:var(--ok);color:var(--ok-ink)}
+.pin.done b::after{content:"✓"}
+.pin em{display:none;position:absolute;left:0;top:calc(var(--sz)/2 + 3px);transform:translateX(-50%);font:600 12px/1 var(--f-tag);font-style:normal;white-space:nowrap;background:#1c2125;color:#fff;padding:3px 5px;border-radius:4px}
+.pins.big .pin em{display:block}
+.pin.sel b{box-shadow:0 0 0 3px #fff,0 0 0 7px #1d6fe0}
+.pin.sel em{display:block;background:#1d6fe0}
+.ctrls{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:8px;z-index:2}
+.ctrls button,.nextbtn{width:48px;height:48px;border-radius:10px;border:1px solid #c9c7c0;background:#ffffffee;color:#1c2125;font:700 1.4rem/1 var(--f-body);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px #0002}
+.ctrls svg{width:22px;height:22px}
+.nextbtn{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:auto;padding:0 16px;gap:8px;font-size:1rem;background:var(--pend);border-color:#1c2125;z-index:2}
+.nextbtn svg{width:22px;height:22px}
+.hint{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:#1c2125e6;color:#fff;padding:6px 12px;border-radius:999px;font-size:.85rem;pointer-events:none;white-space:nowrap;z-index:2;transition:opacity .4s}
+
+/* Ficha del sensor */
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--panel);border-top:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px #0003;padding:14px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet .in{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.sheet .top{display:flex;justify-content:space-between;align-items:start;gap:12px}
+.tag{font-family:var(--f-tag);font-weight:600;font-size:1.9rem;line-height:1.05;letter-spacing:.02em}
+.chip{display:inline-block;font-size:.8rem;font-weight:700;padding:3px 9px;border-radius:999px;width:max-content}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.pend{background:var(--pend-bg);color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:12px;font:700 1.15rem var(--f-body);padding:14px 18px;cursor:pointer;min-height:60px}
+.btn svg{width:26px;height:26px;flex:none}
+.btn-cam{background:var(--accent);color:var(--accent-ink);width:100%}
+.btn-sec{background:transparent;color:var(--ink);border:2px solid var(--line);min-height:44px;padding:8px 14px;font-size:.95rem}
+.btn[disabled]{opacity:.55;cursor:wait}
+.x{border:0;background:transparent;color:var(--muted);font:600 1rem var(--f-body);padding:8px;cursor:pointer;min-height:44px}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap}
+.thumbs button{padding:0;border:0;background:none;cursor:pointer;border-radius:6px;overflow:hidden}
+.thumbs img{width:72px;height:72px;object-fit:cover;display:block;background:var(--line)}
+button:focus-visible,input:focus-visible{outline:3px solid #1d6fe0;outline-offset:2px}
+
+/* Lista */
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.search{flex:1 1 180px;min-width:0;font:600 1.05rem var(--f-tag);padding:11px 13px;border-radius:10px;border:2px solid var(--line);background:var(--panel);color:var(--ink)}
+.seg{display:flex;border:2px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--panel);color:var(--ink);font:600 .95rem var(--f-body);padding:10px 14px;cursor:pointer;font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.list button{width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--pend);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;gap:2px;min-height:56px}
+.list button.done{border-left-color:var(--ok)}
+.list .lt{font:600 1.1rem var(--f-tag)}
+.list .ls{font-size:.85rem;color:var(--muted)}
+.empty{color:var(--muted);padding:8px 0}
+.owner{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px));background:#1c2125;color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;z-index:40;max-width:calc(100% - 32px);text-align:center}
+.lb{position:fixed;inset:0;background:rgba(10,12,14,.94);z-index:30;display:flex;flex-direction:column;gap:12px;padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.lb img{flex:1;min-height:0;object-fit:contain;width:100%;max-width:100%}
+.lb .row2{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;color:#f2f2f2}
+.lb .btn-sec{color:#f2f2f2;border-color:#555}
+.lb .danger{color:#ff9a90;border-color:#7a3236}
+@media (prefers-reduced-motion: reduce){.bar>i,.hint{transition:none}}
+
+.retry{display:flex;gap:8px;flex-wrap:wrap}
+.retry .btn{flex:1 1 160px}
+.warn{background:var(--pend-bg);border-radius:10px;padding:10px 12px;font-size:.95rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="t">
+      <span class="eyebrow">Nivel 02 · Detección de incendios · DH1-2-07</span>
+      <h1>Fotos de sensores</h1>
+    </div>
+    <div class="prog">
+      <div class="bar"><i id="barFill"></i></div>
+      <span class="count" id="countText">Cargando…</span>
+    </div>
+  </header>
+
+  <div class="legend">
+    <span><i style="background:var(--pend)"></i>Falta foto</span>
+    <span><i style="background:var(--ok)"></i>Ya tiene foto</span>
+    <span>Toca un círculo para tomarle la foto</span>
+  </div>
+
+  <div class="notice" id="notice" hidden></div>
+
+  <div class="vp" id="vp" aria-label="Croquis del nivel 02 con los sensores">
+    <img id="plano" src="plano.png" alt="Croquis del nivel 02" draggable="false">
+    <div class="pins" id="pins"></div>
+    <div class="hint" id="hint">Pellizca para hacer zoom · arrastra para moverte</div>
+    <div class="ctrls">
+      <button type="button" id="zIn" aria-label="Acercar">+</button>
+      <button type="button" id="zOut" aria-label="Alejar">−</button>
+      <button type="button" id="zFit" aria-label="Ver todo el plano"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button type="button" id="zFull" aria-label="Pantalla completa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg></button>
+    </div>
+    <button type="button" class="nextbtn" id="nextBtn" hidden></button>
+  </div>
+
+  <div class="tools">
+    <input class="search" id="q" type="search" autocomplete="off" placeholder="Buscar sensor, ej. SH-014" aria-label="Buscar sensor">
+    <div class="seg" role="group" aria-label="Filtro">
+      <button type="button" id="fPend" aria-pressed="true">Faltan</button>
+      <button type="button" id="fDone" aria-pressed="false">Listos</button>
+    </div>
+  </div>
+  <ul class="list" id="list"></ul>
+  <p class="empty" id="listEmpty" hidden></p>
+</div>
+
+<div class="sheet" id="sheet" hidden role="dialog" aria-label="Sensor seleccionado">
+  <div class="in">
+    <div class="top">
+      <div>
+        <div class="tag" id="sTag"></div>
+        <div class="muted" id="sTipo"></div>
+      </div>
+      <button type="button" class="x" id="sClose">Cerrar</button>
+    </div>
+    <span class="chip" id="sChip"></span>
+    <div class="thumbs" id="sThumbs"></div>
+    <div class="warn" id="sWarn" hidden>No se pudo subir la foto. Muévete a donde tengas mejor señal y toca «Reintentar».</div>
+    <div class="retry" id="sRetry" hidden>
+      <button type="button" class="btn btn-cam" id="rRetry">Reintentar subida</button>
+      <button type="button" class="btn btn-sec" id="rSave">Guardar en el teléfono</button>
+    </div>
+    <button type="button" class="btn btn-cam" id="sCam"></button>
+  </div>
+</div>
+
+<input type="file" id="cam" accept="image/*" capture="environment" hidden>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Foto">
+  <div class="row2"><strong id="lbTitle" style="font-family:var(--f-tag)"></strong><button type="button" class="btn btn-sec" id="lbClose">Cerrar</button></div>
+  <img id="lbImg" alt="">
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(() => {
+  // Sensores extraídos del DWG: [clave, etiqueta, tipo, x, y] (x, y = posición relativa en el croquis)
+  const DATA = [["SH-001","SH-001","Humo",0.43105,0.32856],["SH-001-B","SH-001 (2)","Humo",0.43684,0.42087],["SH-002","SH-002","Humo",0.4434,0.17386],["SH-003","SH-003","Humo",0.37873,0.27238],["SH-004","SH-004","Humo",0.31534,0.27238],["SH-005","SH-005","Humo",0.28605,0.20853],["SH-006","SH-006","Humo",0.28605,0.17097],["SH-007","SH-007","Humo",0.24914,0.21132],["SH-008","SH-008","Humo",0.22425,0.1937],["SH-009","SH-009","Humo",0.1847,0.1937],["SH-010","SH-010","Humo",0.14153,0.16159],["SH-011","SH-011","Humo",0.37873,0.39691],["SH-012","SH-012","Humo",0.27205,0.46484],["SH-013","SH-013","Humo",0.15632,0.48973],["SH-014","SH-014","Humo",0.13456,0.51642],["SH-015","SH-015","Humo",0.31599,0.63869],["SH-016","SH-016","Humo",0.25076,0.63869],["SH-017","SH-017","Humo",0.1723,0.63869],["SH-018","SH-018","Humo",0.26681,0.74142],["SH-019","SH-019","Humo",0.21627,0.74142],["SH-020","SH-020","Humo",0.26681,0.84252],["SH-021","SH-021","Humo",0.17604,0.84252],["SH-022","SH-022","Humo",0.39382,0.59351],["SH-023","SH-023","Humo",0.15781,0.74142],["SH-024","SH-024","Humo",0.39382,0.49577],["SH-025","SH-025","Humo",0.39382,0.46287],["SH-026","SH-026","Humo",0.50397,0.2429],["SH-027","SH-027","Humo",0.56854,0.19076],["SH-028","SH-028","Humo",0.56854,0.30701],["SH-029","SH-029","Humo",0.64634,0.36435],["SH-030","SH-030","Humo",0.65083,0.32563],["SH-031","SH-031","Humo",0.69398,0.32563],["SH-032","SH-032","Humo",0.60828,0.32563],["SH-033","SH-033","Humo",0.65083,0.26893],["SH-034","SH-034","Humo",0.60828,0.21799],["SH-035","SH-035","Humo",0.65083,0.21799],["SH-036","SH-036","Humo",0.69398,0.21799],["SH-037","SH-037","Humo",0.74006,0.21799],["SH-038","SH-038","Humo",0.84171,0.20655],["SH-039","SH-039","Humo",0.84171,0.259],["SH-040","SH-040","Humo",0.87657,0.259],["SH-041","SH-041","Humo",0.81104,0.23593],["SH-042","SH-042","Humo",0.81104,0.27504],["SH-043","SH-043","Humo",0.81655,0.33937],["SH-044","SH-044","Humo",0.73035,0.3212],["SH-045","SH-045","Humo",0.60316,0.40911],["SH-046","SH-046","Humo",0.7394,0.43191],["SH-047","SH-047","Humo",0.77171,0.43191],["SH-048","SH-048","Humo",0.7394,0.50398],["SH-049","SH-049","Humo",0.77171,0.50398],["SH-050","SH-050","Humo",0.69282,0.46855],["SH-051","SH-051","Humo",0.63162,0.46855],["SH-052","SH-052","Humo",0.5606,0.46855],["SH-053","SH-053","Humo",0.50654,0.72122],["SH-054","SH-054","Humo",0.48139,0.67279],["SH-055","SH-055","Humo",0.48139,0.58788],["SH-056","SH-056","Humo",0.57616,0.62972],["SH-057","SH-057","Humo",0.67309,0.62972],["SH-058","SH-058","Humo",0.76385,0.62972],["SH-059","SH-059","Humo",0.86085,0.61363],["SH-060","SH-060","Humo",0.86085,0.55514],["SH-061","SH-061","Humo",0.86085,0.67779],["SC-001","SC-001","Calor",0.43684,0.37373],["SC-002","SC-002","Calor",0.4434,0.20973],["SC-003","SC-003","Calor",0.1808,0.4342],["SC-004","SC-004","Calor",0.39379,0.72124],["SC-005","SC-005","Calor",0.86732,0.3394]];
+  const SENS = DATA.map(([key, tag, tipo, x, y]) => ({ key, tag, tipo, x, y }));
+  const BYKEY = Object.fromEntries(SENS.map(s => [s.key, s]));
+  const W = 4800, H = 3914, PXM = 4800 / 65; // px de imagen por metro
+  const CFG = window.CONFIG || {};
+  const API = (CFG.API_URL || '').trim(), CLAVE = CFG.CLAVE || '', OBRA = CFG.OBRA || '';
+  const CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+  const thumb = (id, w) => `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${w}`;
+
+  const $ = id => document.getElementById(id);
+  const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let fotos = {}, filtro = 'pend', q = '', sel = null, busy = false, ready = false, pendiente = null;
+  const nF = s => (fotos[s.key] || []).length;
+
+  function toast(msg, ms = 2600){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, ms); }
+
+  // ---------------- Visor con zoom ----------------
+  const vp = $('vp'), img = $('plano'), pinsEl = $('pins');
+  let S = 0.1, TX = 0, TY = 0, FIT = 0.1; const MAX = 1.6;
+  const pinEls = {};
+  SENS.forEach(s => { const d = document.createElement('div'); d.className = 'pin'; d.innerHTML = `<b></b><em>${esc(s.tag)}</em>`; pinsEl.appendChild(d); pinEls[s.key] = d; });
+
+  const rect = () => vp.getBoundingClientRect();
+  function fitView(){ const r = rect(); FIT = Math.min(r.width / W, r.height / H); S = FIT; TX = (r.width - W*S)/2; TY = (r.height - H*S)/2; apply(); }
+  function clampT(){
+    const r = rect(), w = W*S, h = H*S, m = 80;
+    TX = w <= r.width ? (r.width - w)/2 : Math.min(m, Math.max(r.width - w - m, TX));
+    TY = h <= r.height ? (r.height - h)/2 : Math.min(m, Math.max(r.height - h - m, TY));
+  }
+  function zoomAt(f, cx, cy){ const ns = Math.max(FIT, Math.min(MAX, S*f)), k = ns/S; TX = cx - (cx - TX)*k; TY = cy - (cy - TY)*k; S = ns; clampT(); apply(); }
+  let raf = 0;
+  function apply(){ if (raf) return; raf = requestAnimationFrame(() => { raf = 0; img.style.transform = `translate(${TX}px,${TY}px) scale(${S})`; placePins(); }); }
+  function curSize(){ return Math.max(16, Math.min(44, S*PXM*0.85)); }
+  function placePins(){
+    pinsEl.style.setProperty('--sz', curSize() + 'px');
+    pinsEl.classList.toggle('big', S*PXM >= 40);
+    for (const s of SENS) pinEls[s.key].style.transform = `translate(${TX + s.x*W*S}px,${TY + s.y*H*S}px)`;
+  }
+  function flyTo(s){
+    const r = rect(); S = Math.max(S, Math.min(MAX, 55/PXM));
+    TX = r.width/2 - s.x*W*S; TY = r.height*0.42 - s.y*H*S; clampT(); apply();
+  }
+
+  const pts = new Map(); let start = null, moved = false, pinch = null, lastTap = 0;
+  vp.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    vp.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    hideHint();
+    if (pts.size === 1){ start = { x: e.clientX, y: e.clientY, tx: TX, ty: TY }; moved = false; }
+    else if (pts.size === 2){ const [a, b] = [...pts.values()], r = rect(); pinch = { d: Math.hypot(a.x-b.x, a.y-b.y), mx: (a.x+b.x)/2 - r.left, my: (a.y+b.y)/2 - r.top }; moved = true; }
+  });
+  vp.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size >= 2 && pinch){
+      const [a, b] = [...pts.values()], r = rect();
+      const d = Math.hypot(a.x-b.x, a.y-b.y), mx = (a.x+b.x)/2 - r.left, my = (a.y+b.y)/2 - r.top;
+      zoomAt(d / pinch.d, mx, my); TX += mx - pinch.mx; TY += my - pinch.my; clampT(); apply();
+      pinch = { d, mx, my };
+    } else if (pts.size === 1 && start){
+      const dx = e.clientX - start.x, dy = e.clientY - start.y;
+      if (!moved && Math.hypot(dx, dy) > 7){ moved = true; vp.classList.add('drag'); }
+      if (moved){ TX = start.tx + dx; TY = start.ty + dy; clampT(); apply(); }
+    }
+  });
+  function endPtr(e){
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId);
+    if (pts.size === 1){ const p = [...pts.values()][0]; start = { x: p.x, y: p.y, tx: TX, ty: TY }; pinch = null; }
+    if (pts.size === 0){
+      vp.classList.remove('drag');
+      if (!moved && e.type === 'pointerup') tap(e.clientX, e.clientY);
+      start = null; pinch = null;
+    }
+  }
+  vp.addEventListener('pointerup', endPtr); vp.addEventListener('pointercancel', endPtr);
+  vp.addEventListener('wheel', e => { e.preventDefault(); const r = rect(); zoomAt(Math.exp(-e.deltaY * 0.0016), e.clientX - r.left, e.clientY - r.top); hideHint(); }, { passive: false });
+
+  function tap(cx, cy){
+    const r = rect(), x = cx - r.left, y = cy - r.top, rad = Math.max(24, curSize()/2 + 8);
+    const near = SENS.map(s => ({ s, d: Math.hypot(TX + s.x*W*S - x, TY + s.y*H*S - y) })).filter(o => o.d <= rad).sort((a, b) => a.d - b.d);
+    const now = Date.now();
+    if (near.length === 0){ if (now - lastTap < 320){ zoomAt(2.2, x, y); lastTap = 0; } else lastTap = now; return; }
+    if (near.length > 1 && S*PXM < 40 && near[1].d - near[0].d < 10){ zoomAt(2.6, x, y); return; }
+    select(near[0].s);
+  }
+
+  $('zIn').onclick = () => { const r = rect(); zoomAt(1.8, r.width/2, r.height/2); };
+  $('zOut').onclick = () => { const r = rect(); zoomAt(1/1.8, r.width/2, r.height/2); };
+  $('zFit').onclick = fitView;
+  $('zFull').onclick = () => {
+    const full = vp.classList.toggle('full');
+    document.body.style.overflow = full ? 'hidden' : '';
+    $('zFull').setAttribute('aria-label', full ? 'Salir de pantalla completa' : 'Pantalla completa');
+    requestAnimationFrame(fitView);
+  };
+  let hintHidden = false;
+  function hideHint(){ if (hintHidden) return; hintHidden = true; $('hint').style.opacity = 0; setTimeout(() => $('hint').hidden = true, 450); }
+  setTimeout(hideHint, 6000);
+  window.addEventListener('resize', () => { const wasFit = S <= FIT * 1.01; const r = rect(); FIT = Math.min(r.width / W, r.height / H); if (wasFit) fitView(); else { clampT(); apply(); } });
+
+  // ---------------- Estado y vistas ----------------
+  function select(s){ sel = s; if (pendiente && pendiente.s !== s) pendiente = null; renderPins(); renderSheet(); $('sheet').hidden = false; }
+  function closeSheet(){ sel = null; $('sheet').hidden = true; renderPins(); }
+  $('sClose').onclick = closeSheet;
+
+  function renderPins(){ for (const s of SENS){ const el = pinEls[s.key]; el.classList.toggle('done', nF(s) > 0); el.classList.toggle('sel', sel === s); } }
+  function renderSheet(){
+    if (!sel) return;
+    const n = nF(sel), arr = fotos[sel.key] || [];
+    $('sTag').textContent = sel.tag;
+    $('sTipo').textContent = 'Detector de ' + sel.tipo.toLowerCase();
+    $('sChip').className = 'chip ' + (n ? 'ok' : 'pend');
+    $('sChip').textContent = n ? (n === 1 ? 'Listo · 1 foto' : `Listo · ${n} fotos`) : 'Falta foto';
+    $('sThumbs').innerHTML = arr.map((f, i) => `<button type="button" data-i="${i}" aria-label="Ver foto ${i+1}"><img src="${thumb(f.id, 200)}" alt="" loading="lazy" referrerpolicy="no-referrer"></button>`).join('');
+    const fallo = !!(pendiente && pendiente.s === sel && !busy);
+    $('sWarn').hidden = !fallo; $('sRetry').hidden = !fallo;
+    const b = $('sCam'); b.disabled = busy; b.hidden = fallo;
+    b.innerHTML = busy ? `${CAM}<span>Subiendo…</span>` : `${CAM}<span>${n ? 'Tomar otra foto' : 'Tomar foto de ' + esc(sel.tag)}</span>`;
+  }
+  function renderAll(){
+    const total = SENS.length, done = SENS.filter(s => nF(s) > 0).length;
+    $('barFill').style.width = (done / total * 100) + '%';
+    $('countText').textContent = ready ? `${done} de ${total} sensores con foto` + (done === total ? ' · ¡Completo!' : '') : 'Cargando…';
+    $('fPend').textContent = `Faltan ${total - done}`; $('fDone').textContent = `Listos ${done}`;
+    renderPins(); renderSheet();
+    const qq = q.trim().toLowerCase();
+    const vis = SENS.filter(s => qq ? s.tag.toLowerCase().includes(qq) : (filtro === 'pend' ? nF(s) === 0 : nF(s) > 0));
+    $('list').innerHTML = vis.map(s => { const n = nF(s); return `<li><button type="button" class="${n ? 'done' : ''}" data-key="${esc(s.key)}"><span class="lt">${esc(s.tag)}</span><span class="ls">${esc(s.tipo)} · ${n ? (n === 1 ? '1 foto' : n + ' fotos') : 'falta foto'}</span></button></li>`; }).join('');
+    const le = $('listEmpty'); le.hidden = vis.length > 0;
+    le.textContent = qq ? `No hay ningún sensor «${q}».` : (filtro === 'pend' ? 'Ya todos los sensores tienen foto.' : 'Todavía no hay sensores con foto.');
+    const next = SENS.find(s => nF(s) === 0);
+    $('nextBtn').hidden = !next || !ready;
+    if (next){ $('nextBtn').innerHTML = `${CAM}<span>Siguiente: ${esc(next.tag)}</span>`; $('nextBtn').dataset.key = next.key; }
+  }
+  $('nextBtn').onclick = () => { const s = BYKEY[$('nextBtn').dataset.key]; if (s){ flyTo(s); select(s); } };
+  $('list').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const s = BYKEY[b.dataset.key]; if (s){ vp.scrollIntoView({ block: 'start', behavior: 'smooth' }); flyTo(s); select(s); } });
+  $('q').addEventListener('input', e => { q = e.target.value; renderAll(); });
+  $('fPend').onclick = () => { filtro = 'pend'; $('fPend').setAttribute('aria-pressed','true'); $('fDone').setAttribute('aria-pressed','false'); renderAll(); };
+  $('fDone').onclick = () => { filtro = 'done'; $('fDone').setAttribute('aria-pressed','true'); $('fPend').setAttribute('aria-pressed','false'); renderAll(); };
+
+  // ---------------- Comunicación con Google Drive ----------------
+  async function cargar(){
+    if (!API) return;
+    try {
+      const r = await fetch(`${API}?clave=${encodeURIComponent(CLAVE)}&t=${Date.now()}`);
+      const j = await r.json();
+      if (!j.ok){ aviso(j.error === 'clave' ? `La clave de config.js ("${CLAVE}") no coincide con la del script de Google que termina en …${API.slice(-12)}.` : 'El script de Google respondió con un error.'); return; }
+      fotos = j.fotos || {}; ready = true; $('notice').hidden = true; renderAll();
+    } catch (e){ if (!ready) aviso('No se pudo conectar con Google Drive. Revisa tu señal.'); }
+  }
+  function aviso(t){ const n = $('notice'); n.textContent = t; n.hidden = false; $('countText').textContent = `${SENS.length} sensores en el plano`; }
+
+  const aBase64 = blob => new Promise((ok, bad) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.onerror = bad; fr.readAsDataURL(blob); });
+
+  async function subir(blob, s){
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ clave: CLAVE, sensor: s.key, imagen: await aBase64(blob) }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'error');
+    (fotos[s.key] = fotos[s.key] || []).push({ id: j.id, at: new Date().toISOString() });
+  }
+
+  async function intentar(blob, s){
+    busy = true; renderSheet(); toast(`Subiendo foto de ${s.tag}…`, 90000);
+    try { await subir(blob, s); pendiente = null; toast(`Foto de ${s.tag} guardada ✓`); }
+    catch (e){ pendiente = { blob, s }; toast(e.message === 'clave' ? 'La clave no coincide. Avisa a tu supervisor.' : 'No se pudo subir la foto.', 4000); }
+    finally { busy = false; renderAll(); }
+  }
+
+  // ---------------- Foto: cámara → sello con etiqueta y mini-plano ----------------
+  $('sCam').onclick = () => {
+    if (busy || !sel) return;
+    if (!API){ toast('Falta configurar la URL de Google en config.js.', 4000); return; }
+    $('cam').value = ''; $('cam').click();
+  };
+  $('rRetry').onclick = () => { if (pendiente && !busy) intentar(pendiente.blob, pendiente.s); };
+  $('rSave').onclick = () => {
+    if (!pendiente) return;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(pendiente.blob);
+    a.download = `${pendiente.s.key}_${Date.now()}.jpg`; document.body.appendChild(a); a.click(); a.remove();
+    toast('Foto guardada en el teléfono. Mándasela a tu supervisor.', 4000);
+  };
+
+  function loadImg(file){ return new Promise((ok, bad) => { const u = URL.createObjectURL(file), im = new Image(); im.onload = () => { ok(im); URL.revokeObjectURL(u); }; im.onerror = () => { bad(new Error('img')); URL.revokeObjectURL(u); }; im.src = u; }); }
+
+  async function procesar(file, s){
+    const im = await loadImg(file);
+    const sc = Math.min(1, 1800 / Math.max(im.naturalWidth, im.naturalHeight));
+    const w = Math.round(im.naturalWidth * sc), h = Math.round(im.naturalHeight * sc);
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const cx = cv.getContext('2d');
+    cx.drawImage(im, 0, 0, w, h);
+    const band = Math.max(42, Math.round(Math.min(w, h) * 0.075));
+    cx.fillStyle = 'rgba(0,0,0,0.65)'; cx.fillRect(0, h - band, w, band);
+    cx.fillStyle = '#fff'; cx.textBaseline = 'middle';
+    cx.font = `700 ${Math.round(band*0.56)}px "IBM Plex Mono", monospace`;
+    cx.fillText(s.tag, band*0.3, h - band/2);
+    const tw = cx.measureText(s.tag).width;
+    cx.font = `500 ${Math.round(band*0.36)}px "Barlow", sans-serif`;
+    const fecha = new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+    cx.fillText([`Detector de ${s.tipo.toLowerCase()}`, OBRA, fecha].filter(Boolean).join(' · '), band*0.3 + tw + band*0.5, h - band/2, Math.max(10, w - tw - band*1.2));
+    if (img.complete && img.naturalWidth){
+      const ins = Math.round(Math.min(w, h) * 0.3), pad = Math.round(ins * 0.06), R = 5 * PXM;
+      const px = s.x * img.naturalWidth, py = s.y * img.naturalHeight, x0 = w - ins - pad, y0 = pad;
+      cx.fillStyle = '#fff'; cx.fillRect(x0 - 4, y0 - 4, ins + 8, ins + 8);
+      cx.drawImage(img, px - R, py - R, R*2, R*2, x0, y0, ins, ins);
+      cx.strokeStyle = '#1d6fe0'; cx.lineWidth = Math.max(3, ins*0.025);
+      cx.beginPath(); cx.arc(x0 + ins/2, y0 + ins/2, ins*0.09, 0, Math.PI*2); cx.stroke();
+      cx.strokeStyle = '#1c2125'; cx.lineWidth = 2; cx.strokeRect(x0 - 4, y0 - 4, ins + 8, ins + 8);
+    }
+    return await new Promise((ok, bad) => cv.toBlob(b => b ? ok(b) : bad(new Error('blob')), 'image/jpeg', 0.82));
+  }
+
+  $('cam').addEventListener('change', async e => {
+    const file = e.target.files && e.target.files[0], s = sel;
+    if (!file || !s) return;
+    let blob;
+    try { blob = await procesar(file, s); } catch (err){ toast('No se pudo leer la foto. Tómala otra vez.'); return; }
+    intentar(blob, s);
+  });
+
+  // ---------------- Visor de fotos ----------------
+  function cerrarLB(){ $('lb').hidden = true; $('lbImg').removeAttribute('src'); }
+  $('lbClose').onclick = cerrarLB;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape'){ if (!$('lb').hidden) cerrarLB(); else if (!$('sheet').hidden) closeSheet(); else if (vp.classList.contains('full')) $('zFull').click(); } });
+  $('sThumbs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || !sel) return;
+    const i = +b.dataset.i, f = fotos[sel.key][i];
+    $('lbImg').referrerPolicy = 'no-referrer';
+    $('lbImg').src = thumb(f.id, 1600); $('lbTitle').textContent = sel.tag + (nF(sel) > 1 ? ` · ${i+1}` : ''); $('lb').hidden = false;
+  });
+
+  // ---------------- Arranque ----------------
+  if (img.complete) fitView(); else img.addEventListener('load', fitView);
+  requestAnimationFrame(fitView);
+  renderAll();
+  if (!API) aviso('Falta configurar: pega en config.js la URL del script de Google (ver LEEME.md).');
+  else { cargar(); setInterval(() => { if (!busy && document.visibilityState === 'visible') cargar(); }, 30000); }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && API) cargar(); });
+})();
+</script>
+</body>
+</html>
